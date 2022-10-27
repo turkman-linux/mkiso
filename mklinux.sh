@@ -118,8 +118,7 @@ if [[ $nobuild == 1 ]] ; then
 fi
 
 # Building kernel
-yes "" | unshare -rufipnm make bzImage -j$(nproc)
-unshare -rufipnm make modules -j$(nproc)
+yes "" | unshare -rufipnm make all -j$(nproc)
 
 # Create directories
 mkdir -p "$pkgdir/boot" "$pkgdir/usr/src" "$modulesdir" || true
