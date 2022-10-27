@@ -15,15 +15,11 @@ done
 # Default variables
 config=./config
 type=libre
-LOCAL_VERSION="$(grep "^NAME=" /etc/os-release | cut -f 2 -d '=' | tr '[:upper:]' '[:lower:]')" | tr ' ' '-'
-version=$(wget -O - https://kernel.org/ | grep "downloadarrow_small.png" | sed "s/.*href=\"//g;s/\".*//g;s/.*linux-//g;s/\.tar.*//g")
-if echo ${version} | grep -e "\.[0-9]*\.0$" ; then
-    version=${version::-2}
-fi
-
-
+LOCAL_VERSION="$(grep "^NAME=" /etc/os-release | cut -f 2 -d '=' | tr '[:upper:]' '[:lower:]'| tr ' ' '-')"
+echo ${LOCAL_VERSION}
+nobuild=0
 # Options
-while getopts -- ':c:v:t:' OPTION; do
+while getopts -- ':c:v:t:n:' OPTION; do
   case "$OPTION" in
    c)
       config="${OPTARG[@]}"
@@ -37,6 +33,9 @@ while getopts -- ':c:v:t:' OPTION; do
    l)
      LOCAL_VERSION="${OPTARG[@]}"
      ;;
+   n)
+     nobuild=1
+     ;;
    ?)
      echo "Usage: mklinux <options>"
      echo " -h : help message"
@@ -48,6 +47,13 @@ while getopts -- ':c:v:t:' OPTION; do
      ;;
     esac
 done
+
+if [[ "$version" == "" ]] ; then
+    version=$(wget -O - https://kernel.org/ | grep "downloadarrow_small.png" | sed "s/.*href=\"//g;s/\".*//g;s/.*linux-//g;s/\.tar.*//g")
+    if echo ${version} | grep -e "\.[0-9]*\.0$" ; then
+        version=${version::-2}
+    fi
+fi
 
 #fetch kernel
 if [[ $type == libre ]] ; then
@@ -86,6 +92,9 @@ builddir="${pkgdir}/lib/modules/${VERSION}/build"
 
 # set local version
 sed -i "s/^CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION=${LOCAL_VERSION}/g" .config
+if [[ $nobuild == 1 ]] ; then
+    exit 0
+fi
 
 # Building kernel
 yes "" | unshare -rufipnm make bzImage -j$(nproc)
