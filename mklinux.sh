@@ -22,9 +22,10 @@ type=libre
 LOCAL_VERSION="-$(grep "^NAME=" /etc/os-release | cut -f 2 -d '=' | tr '[:upper:]' '[:lower:]'| tr ' ' '-')"
 nobuild=0
 pkgdir=""
+sysname="Linux"
 
 # Options
-while getopts -- ':c:v:t:n:o:' OPTION; do
+while getopts -- ':c:v:t:n:o:s:' OPTION; do
   case "$OPTION" in
    c)
       config="${OPTARG[@]}"
@@ -44,6 +45,9 @@ while getopts -- ':c:v:t:n:o:' OPTION; do
    o)
      pkgdir="${OPTARG[@]}"
      ;;
+   s)
+     sysname="${OPTARG[@]}"
+     ;;
    ?)
      echo "Usage: mklinux <options>"
      echo " -h : help message"
@@ -52,6 +56,7 @@ while getopts -- ':c:v:t:n:o:' OPTION; do
      echo " -t : type (linux / libre / xanmod)"
      echo " -l : local version"
      echo " -o : output directory"
+     echo " -s : UTS sysname"
      exit 0
      ;;
     esac
@@ -82,6 +87,11 @@ else
     echo "Type is invaild"
     exit 1
 fi
+
+if [[ "$sysname" != "Linux" ]] ; then
+    sed -i "s/#define UTS_SYSNAME .*/#define UTS_SYSNAME \"$sysname\"/g" linux-${version}//include/linux/uts.h
+fi
+
 make -C linux-${version} distclean defconfig
 # fetch config
 if echo "$config" | grep "://" >/dev/null ; then
