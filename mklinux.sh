@@ -1,11 +1,11 @@
 #!/bin/bash
 # Kernel builder
-# Uses sulin config
+# Uses sulix config
 #
 #
 # Initial stages
 set -e
-for cmd in bc wget gcc ; do
+for cmd in bc wget gcc cpio tar ; do
     if ! which $cmd ; then
         echo $cmd not found
         exit 1
@@ -14,7 +14,8 @@ done
 
 # Default variables
 config=./config
-LOCAL_VERSION="$(grep "^NAME=" /etc/os-release | cut -f 2 -d '=' | tr '[:upper:]' '[:lower:]')"
+type=libre
+LOCAL_VERSION="$(grep "^NAME=" /etc/os-release | cut -f 2 -d '=' | tr '[:upper:]' '[:lower:]')" | tr ' ' '-'
 version=$(wget -O - https://kernel.org/ | grep "downloadarrow_small.png" | sed "s/.*href=\"//g;s/\".*//g;s/.*linux-//g;s/\.tar.*//g")
 if echo ${version} | grep -e "\.[0-9]*\.0$" ; then
     version=${version::-2}
@@ -22,7 +23,7 @@ fi
 
 
 # Options
-while getopts -- ':c:v:' OPTION; do
+while getopts -- ':c:v:t:' OPTION; do
   case "$OPTION" in
    c)
       config="${OPTARG[@]}"
@@ -30,20 +31,33 @@ while getopts -- ':c:v:' OPTION; do
    v)
       version="${OPTARG[@]}"
       ;;
+   t)
+     type="${OPTARG[@]}"
+     ;;
+   l)
+     LOCAL_VERSION="${OPTARG[@]}"
+     ;;
    ?)
-      echo "Usage: mklinux <options>"
-      echo " -c : config location"
-      echo " -v : kernel version"
-      echo " -h : help message"
-      exit 0
-      ;;
+     echo "Usage: mklinux <options>"
+     echo " -h : help message"
+     echo " -c : config location"
+     echo " -v : kernel version"
+     echo " -t : type (linux / libre)"
+     echo " -l : local version"
+     exit 0
+     ;;
     esac
 done
 
 #fetch kernel
-wget -c https://cdn.kernel.org/pub/linux/kernel/v${version::1}.x/linux-${version}.tar.xz
-# extrack if directory not exists
-[[ -d linux-${version} ]] || tar -xf linux-${version}.tar.xz
+if [[ $type == libre ]] ; then
+    wget -c http://linux-libre.fsfla.org/pub/linux-libre/releases/${version}-gnu/linux-libre-${version}-gnu.tar.xz
+    [[ -d linux-${version} ]] || tar -xf linux-libre-${version}-gnu.tar.xz
+else
+    wget -c https://cdn.kernel.org/pub/linux/kernel/v${version::1}.x/linux-${version}.tar.xz
+    # extrack if directory not exists
+    [[ -d linux-${version} ]] || tar -xf linux-${version}.tar.xz
+fi
 make -C linux-${version} distclean defconfig
 # fetch config
 if echo "$config" | grep "://" >/dev/null ; then
@@ -67,6 +81,8 @@ pkgdir=../build-linux/${VERSION}
 modulesdir=${pkgdir}/lib/modules/${VERSION}
 builddir="${pkgdir}/lib/modules/${VERSION}/build"
 
+# set local version
+sed -i "s/^CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION=${LOCAL_VERSION}/g"
 
 # Building kernel
 yes "" | make bzImage -j$(nproc)
