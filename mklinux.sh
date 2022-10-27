@@ -5,7 +5,7 @@
 #
 # Initial stages
 set -e
-for cmd in bc wget gcc cpio tar ; do
+for cmd in bc wget gcc cpio tar unshare ; do
     if ! which $cmd ; then
         echo $cmd not found
         exit 1
