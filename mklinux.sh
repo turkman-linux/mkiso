@@ -53,10 +53,13 @@ done
 if [[ $type == libre ]] ; then
     wget -c http://linux-libre.fsfla.org/pub/linux-libre/releases/${version}-gnu/linux-libre-${version}-gnu.tar.xz
     [[ -d linux-${version} ]] || tar -xf linux-libre-${version}-gnu.tar.xz
-else
+elif [[ $type == linux ]] ; then
     wget -c https://cdn.kernel.org/pub/linux/kernel/v${version::1}.x/linux-${version}.tar.xz
     # extrack if directory not exists
     [[ -d linux-${version} ]] || tar -xf linux-${version}.tar.xz
+else
+    echo "Type is invaild"
+    exit 1
 fi
 make -C linux-${version} distclean defconfig
 # fetch config
@@ -76,7 +79,7 @@ unset config
 
 # Variable definition
 VERSION="$(make -s kernelversion)"
-pkgdir=../build-linux/${VERSION}
+pkgdir=../build-$type/${VERSION}
 
 modulesdir=${pkgdir}/lib/modules/${VERSION}
 builddir="${pkgdir}/lib/modules/${VERSION}/build"
@@ -85,8 +88,8 @@ builddir="${pkgdir}/lib/modules/${VERSION}/build"
 sed -i "s/^CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION=${LOCAL_VERSION}/g" .config
 
 # Building kernel
-yes "" | make bzImage -j$(nproc)
-make modules -j$(nproc)
+yes "" | unshare -rufipnm make bzImage -j$(nproc)
+unshare -rufipnm make modules -j$(nproc)
 
 # Create directories
 mkdir -p "$pkgdir/boot" "$pkgdir/usr/src" "$modulesdir" || true
