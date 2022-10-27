@@ -1,0 +1,113 @@
+#!/bin/bash
+# Kernel builder
+# Uses sulin config
+#
+#
+# Initial stages
+set -e
+for cmd in bc wget gcc ; do
+    if ! which $cmd ; then
+        echo $cmd not found
+        exit 1
+    fi
+done
+
+# Default variables
+config=./config
+LOCAL_VERSION="$(grep "^NAME=" /etc/os-release | cut -f 2 -d '=' | tr '[:upper:]' '[:lower:]')"
+version=$(wget -O - https://kernel.org/ | grep "downloadarrow_small.png" | sed "s/.*href=\"//g;s/\".*//g;s/.*linux-//g;s/\.tar.*//g")
+if echo ${version} | grep -e "\.[0-9]*\.0$" ; then
+    version=${version::-2}
+fi
+
+
+# Options
+while getopts -- ':c:v:' OPTION; do
+  case "$OPTION" in
+   c)
+      config="${OPTARG[@]}"
+      ;;
+   v)
+      version="${OPTARG[@]}"
+      ;;
+   ?)
+      echo "Usage: mklinux <options>"
+      echo " -c : config location"
+      echo " -v : kernel version"
+      echo " -h : help message"
+      exit 0
+      ;;
+    esac
+done
+
+#fetch kernel
+wget -c https://cdn.kernel.org/pub/linux/kernel/v${version::1}.x/linux-${version}.tar.xz
+# extrack if directory not exists
+[[ -d linux-${version} ]] || tar -xf linux-${version}.tar.xz
+make -C linux-${version} distclean defconfig
+# fetch config
+if echo "$config" | grep "://" >/dev/null ; then
+    wget -c $config -O - > linux-${version}/.config
+elif [[ -f $config ]] ; then
+    cat $config > linux-${version}/.config
+else
+    echo "Config not found"
+    exit 1
+fi
+
+# go kernel build path and clear optionse
+cd linux-${version}
+unset version
+unset config
+
+# Variable definition
+VERSION="$(make -s kernelversion)"
+pkgdir=../build-linux/${VERSION}
+
+modulesdir=${pkgdir}/lib/modules/${VERSION}
+builddir="${pkgdir}/lib/modules/${VERSION}/build"
+
+
+# Building kernel
+yes "" | make bzImage -j$(nproc)
+make modules -j$(nproc)
+
+# Create directories
+mkdir -p "$pkgdir/boot" "$pkgdir/usr/src" "$modulesdir" || true
+
+# install bzImage
+install -Dm644 "$(make -s image_name)" "$pkgdir/boot/vmlinuz-${VERSION}"
+
+# install modules
+make INSTALL_MOD_PATH="$pkgdir" INSTALL_MOD_STRIP=1 modules_install -j$(nproc)
+rm "$modulesdir"/{source,build} || true
+depmod --all --verbose --basedir="$pkgdir" "${VERSION}" || true
+
+# install build directories
+install -Dt "$builddir" -m644 Makefile Module.symvers System.map vmlinux || true
+install .config "$pkgdir/boot/config-${VERSION}"
+install -Dt "$builddir/kernel" -m644 kernel/Makefile
+install -Dt "$builddir/arch/x86" -m644 arch/x86/Makefile
+cp -t "$builddir" -a scripts
+install -Dt "$builddir/tools/objtool" tools/objtool/objtool
+mkdir -p "$builddir"/{fs/xfs,mm}
+ln -s "../../lib/modules/${VERSION}/build" "$pkgdir/usr/src/linux-headers-${VERSION}"
+
+# install libc headers
+make headers_install INSTALL_HDR_PATH="$pkgdir/usr"
+
+# install headers
+cp -t "$builddir" -a include
+cp -t "$builddir/arch/x86" -a arch/x86/include
+install -Dt "$builddir/arch/x86/kernel" -m644 arch/x86/kernel/asm-offsets.s
+install -Dt "$builddir/drivers/md" -m644 drivers/md/*.h
+install -Dt "$builddir/net/mac80211" -m644 net/mac80211/*.h
+install -Dt "$builddir/drivers/media/i2c" -m644 drivers/media/i2c/msp3400-driver.h
+install -Dt "$builddir/drivers/media/usb/dvb-usb" -m644 drivers/media/usb/dvb-usb/*.h
+install -Dt "$builddir/drivers/media/dvb-frontends" -m644 drivers/media/dvb-frontends/*.h
+install -Dt "$builddir/drivers/media/tuners" -m644 drivers/media/tuners/*.h
+find . -name 'Kconfig*' -exec install -Dm644 {} "$builddir/{}" \;
+
+# clearing
+find -L "$builddir" -type l -printf 'Removing %P\n' -delete
+find "$builddir" -type f -name '*.o' -printf 'Removing %P\n' -delete
