@@ -82,7 +82,7 @@ modulesdir=${pkgdir}/lib/modules/${VERSION}
 builddir="${pkgdir}/lib/modules/${VERSION}/build"
 
 # set local version
-sed -i "s/^CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION=${LOCAL_VERSION}/g"
+sed -i "s/^CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION=${LOCAL_VERSION}/g" .config
 
 # Building kernel
 yes "" | make bzImage -j$(nproc)
