@@ -11,7 +11,11 @@ for cmd in bc wget gcc cpio tar unshare ; do
         exit 1
     fi
 done
-
+if [[ $UID -eq 0 && "$ALLOWROOT" == "" ]] ; then
+    echo "Root build in not allowed!"
+    echo "If you want to build with root use \"ALLOWROOT=1 mklinux ...\""
+    exit 1
+fi
 # Default variables
 config=./config
 type=libre
@@ -99,7 +103,7 @@ unset version
 unset config
 
 # Variable definition
-export KBUILD_BUILD_TIMESTAMP=""
+export KBUILD_BUILD_TIMESTAMP="0"
 export EXTRAVERSION="mklinux"
 export LANG=C
 export LC_ALL=C
@@ -124,7 +128,10 @@ if [[ "$nobuild" == 1 ]] ; then
 fi
 
 # Building kernel
-yes "" | unshare -rufipnm make all -j$(nproc)
+if [[ "$ALLOWROOT" == "" ]] ; then
+    e="unshare -rufipnm"
+fi
+yes "" | $e make all -j$(nproc)
 
 # Create directories
 mkdir -p "$pkgdir/boot" "$pkgdir/usr/src" "$modulesdir" || true
