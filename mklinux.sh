@@ -101,6 +101,15 @@ if [[ "$pkgdir" == "" ]] ; then
 if
 modulesdir=${pkgdir}/lib/modules/${VERSION}
 builddir="${pkgdir}/lib/modules/${VERSION}/build"
+arch=$(uname -m)
+case $arch in
+    x86_64)
+      arch=x86
+      ;;
+   aarch64)
+     arch=arm64
+     ;;
+esac
 
 # set local version
 sed -i "s/^CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION=${LOCAL_VERSION}/g" .config
@@ -127,7 +136,7 @@ depmod --all --verbose --basedir="$pkgdir" "${VERSION}" || true
 install -Dt "$builddir" -m644 Makefile Module.symvers System.map vmlinux || true
 install .config "$pkgdir/boot/config-${VERSION}"
 install -Dt "$builddir/kernel" -m644 kernel/Makefile
-install -Dt "$builddir/arch/x86" -m644 arch/x86/Makefile
+install -Dt "$builddir/arch/$arch" -m644 arch/$arch/Makefile
 cp -t "$builddir" -a scripts
 install -Dt "$builddir/tools/objtool" tools/objtool/objtool
 mkdir -p "$builddir"/{fs/xfs,mm}
@@ -138,8 +147,8 @@ make headers_install INSTALL_HDR_PATH="$pkgdir/usr"
 
 # install headers
 cp -t "$builddir" -a include
-cp -t "$builddir/arch/x86" -a arch/x86/include
-install -Dt "$builddir/arch/x86/kernel" -m644 arch/x86/kernel/asm-offsets.s
+cp -t "$builddir/arch/$arch" -a arch/$arch/include
+install -Dt "$builddir/arch/$arch/kernel" -m644 arch/$arch/kernel/asm-offsets.s
 install -Dt "$builddir/drivers/md" -m644 drivers/md/*.h
 install -Dt "$builddir/net/mac80211" -m644 net/mac80211/*.h
 install -Dt "$builddir/drivers/media/i2c" -m644 drivers/media/i2c/msp3400-driver.h
