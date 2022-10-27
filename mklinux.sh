@@ -98,7 +98,7 @@ unset config
 VERSION="$(make -s kernelversion)"
 if [[ "$pkgdir" == "" ]] ; then
     pkgdir=../build-$type/${VERSION}
-if
+fi
 modulesdir=${pkgdir}/lib/modules/${VERSION}
 builddir="${pkgdir}/lib/modules/${VERSION}/build"
 arch=$(uname -m)
