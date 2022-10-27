@@ -6,7 +6,7 @@
 # Initial stages
 set -e
 for cmd in bc wget gcc cpio tar unshare ; do
-    if ! which $cmd ; then
+    if ! which $cmd &>/dev/null ; then
         echo $cmd not found
         exit 1
     fi
@@ -16,7 +16,6 @@ done
 config=./config
 type=libre
 LOCAL_VERSION="$(grep "^NAME=" /etc/os-release | cut -f 2 -d '=' | tr '[:upper:]' '[:lower:]'| tr ' ' '-')"
-echo ${LOCAL_VERSION}
 nobuild=0
 pkgdir=""
 
@@ -46,7 +45,7 @@ while getopts -- ':c:v:t:n:o:' OPTION; do
      echo " -h : help message"
      echo " -c : config location"
      echo " -v : kernel version"
-     echo " -t : type (linux / libre)"
+     echo " -t : type (linux / libre / xanmod)"
      echo " -l : local version"
      echo " -o : output directory"
      exit 0
@@ -69,6 +68,9 @@ elif [[ $type == linux ]] ; then
     wget -c https://cdn.kernel.org/pub/linux/kernel/v${version::1}.x/linux-${version}.tar.xz
     # extrack if directory not exists
     [[ -d linux-${version} ]] || tar -xf linux-${version}.tar.xz
+elif [[ $type == xanmod ]] ; then    
+    wget -c https://github.com/xanmod/linux/archive/${version}-xanmod1.tar.gz
+    [[ -d linux-${version}-xanmod1 ]] || tar -xf ${version}-xanmod1.tar.gz
 else
     echo "Type is invaild"
     exit 1
