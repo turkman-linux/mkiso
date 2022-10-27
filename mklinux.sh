@@ -146,6 +146,8 @@ install -Dt "$builddir/drivers/media/i2c" -m644 drivers/media/i2c/msp3400-driver
 install -Dt "$builddir/drivers/media/usb/dvb-usb" -m644 drivers/media/usb/dvb-usb/*.h
 install -Dt "$builddir/drivers/media/dvb-frontends" -m644 drivers/media/dvb-frontends/*.h
 install -Dt "$builddir/drivers/media/tuners" -m644 drivers/media/tuners/*.h
+# https://bugs.archlinux.org/task/71392
+install -Dt "$builddir/drivers/iio/common/hid-sensors" -m644 drivers/iio/common/hid-sensors/*.h
 find . -name 'Kconfig*' -exec install -Dm644 {} "$builddir/{}" \;
 
 # clearing
