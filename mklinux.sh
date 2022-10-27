@@ -19,7 +19,7 @@ fi
 # Default variables
 config=./config
 type=libre
-LOCAL_VERSION="-$(grep "^NAME=" /etc/os-release | cut -f 2 -d '=' | tr '[:upper:]' '[:lower:]'| tr ' ' '-')"
+LOCAL_VERSION=""
 nobuild=0
 pkgdir=""
 sysname="Linux"
