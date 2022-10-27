@@ -70,7 +70,10 @@ elif [[ $type == linux ]] ; then
     [[ -d linux-${version} ]] || tar -xf linux-${version}.tar.xz
 elif [[ $type == xanmod ]] ; then    
     wget -c https://github.com/xanmod/linux/archive/${version}-xanmod1.tar.gz
-    [[ -d linux-${version}-xanmod1 ]] || tar -xf ${version}-xanmod1.tar.gz
+    if [[ -d linux-${version} ]] ; then
+        tar -xf ${version}-xanmod1.tar.gz
+        mv linux-${version}-xanmod1 linux-${version}
+    fi
 else
     echo "Type is invaild"
     exit 1
