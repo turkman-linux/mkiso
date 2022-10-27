@@ -18,8 +18,10 @@ type=libre
 LOCAL_VERSION="$(grep "^NAME=" /etc/os-release | cut -f 2 -d '=' | tr '[:upper:]' '[:lower:]'| tr ' ' '-')"
 echo ${LOCAL_VERSION}
 nobuild=0
+pkgdir=""
+
 # Options
-while getopts -- ':c:v:t:n:' OPTION; do
+while getopts -- ':c:v:t:n:o:' OPTION; do
   case "$OPTION" in
    c)
       config="${OPTARG[@]}"
@@ -36,6 +38,9 @@ while getopts -- ':c:v:t:n:' OPTION; do
    n)
      nobuild=1
      ;;
+   o)
+     pkgdir="${OPTARG[@]}"
+     ;;
    ?)
      echo "Usage: mklinux <options>"
      echo " -h : help message"
@@ -43,6 +48,7 @@ while getopts -- ':c:v:t:n:' OPTION; do
      echo " -v : kernel version"
      echo " -t : type (linux / libre)"
      echo " -l : local version"
+     echo " -o : output directory"
      exit 0
      ;;
     esac
@@ -85,8 +91,9 @@ unset config
 
 # Variable definition
 VERSION="$(make -s kernelversion)"
-pkgdir=../build-$type/${VERSION}
-
+if [[ "$pkgdir" == "" ]] ; then
+    pkgdir=../build-$type/${VERSION}
+if
 modulesdir=${pkgdir}/lib/modules/${VERSION}
 builddir="${pkgdir}/lib/modules/${VERSION}/build"
 
