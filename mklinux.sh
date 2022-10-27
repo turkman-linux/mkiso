@@ -113,7 +113,7 @@ esac
 
 # set local version
 sed -i "s/^CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION=${LOCAL_VERSION}/g" .config
-if [[ $nobuild == 1 ]] ; then
+if [[ "$nobuild" == 1 ]] ; then
     exit 0
 fi
 
