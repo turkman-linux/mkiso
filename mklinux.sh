@@ -15,7 +15,7 @@ done
 # Default variables
 config=./config
 type=libre
-LOCAL_VERSION="$(grep "^NAME=" /etc/os-release | cut -f 2 -d '=' | tr '[:upper:]' '[:lower:]'| tr ' ' '-')"
+LOCAL_VERSION="-$(grep "^NAME=" /etc/os-release | cut -f 2 -d '=' | tr '[:upper:]' '[:lower:]'| tr ' ' '-')"
 nobuild=0
 pkgdir=""
 
@@ -89,12 +89,20 @@ else
     exit 1
 fi
 
+# set local version
+sed -i "s/^CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION=${LOCAL_VERSION}/g" linux-${version}/.config
+
+
 # go kernel build path and clear optionse
 cd linux-${version}
 unset version
 unset config
 
 # Variable definition
+export KBUILD_BUILD_TIMESTAMP=""
+export EXTRAVERSION="mklinux"
+export LANG=C
+export LC_ALL=C
 VERSION="$(make -s kernelversion)"
 if [[ "$pkgdir" == "" ]] ; then
     pkgdir=../build-$type/${VERSION}
@@ -111,8 +119,6 @@ case $arch in
      ;;
 esac
 
-# set local version
-sed -i "s/^CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION=${LOCAL_VERSION}/g" .config
 if [[ "$nobuild" == 1 ]] ; then
     exit 0
 fi
