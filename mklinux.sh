@@ -83,7 +83,7 @@ echo "  config        : $config"
 if [[ "$yes" == "" ]] ; then
     echo -n "Confirm? [Y/n] "
     read -n 1 c
-    if [[ "$c" != "y" || "$c" != "Y" ]] ; then
+    if [[ "$c" != "y" && "$c" != "Y" ]] ; then
         exit 1
     fi
 fi
