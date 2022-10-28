@@ -25,7 +25,7 @@ pkgdir=""
 sysname="Linux"
 
 # Options
-while getopts -- ':c:v:t:n:o:s:' OPTION; do
+while getopts -- ':c:v:t:n:o:s:y:' OPTION; do
   case "$OPTION" in
    c)
       config="${OPTARG[@]}"
@@ -43,10 +43,13 @@ while getopts -- ':c:v:t:n:o:s:' OPTION; do
      nobuild=1
      ;;
    o)
-     pkgdir="${OPTARG[@]}"
+     pkgdir=$(realpath "${OPTARG[@]}")
      ;;
    s)
      sysname="${OPTARG[@]}"
+     ;;
+   y)
+     yes=1
      ;;
    ?)
      echo "Usage: mklinux <options>"
@@ -56,6 +59,7 @@ while getopts -- ':c:v:t:n:o:s:' OPTION; do
      echo " -t : type (linux / libre / xanmod)"
      echo " -l : local version"
      echo " -o : output directory"
+     echo " -y : confirm"
      echo " -s : UTS sysname"
      exit 0
      ;;
@@ -63,9 +67,24 @@ while getopts -- ':c:v:t:n:o:s:' OPTION; do
 done
 
 if [[ "$version" == "" ]] ; then
-    version=$(wget -O - https://kernel.org/ | grep "downloadarrow_small.png" | sed "s/.*href=\"//g;s/\".*//g;s/.*linux-//g;s/\.tar.*//g")
+    version=$(wget -O - https://kernel.org/ 2>/dev/null | grep "downloadarrow_small.png" | sed "s/.*href=\"//g;s/\".*//g;s/.*linux-//g;s/\.tar.*//g")
     if echo ${version} | grep -e "\.[0-9]*\.0$" ; then
         version=${version::-2}
+    fi
+fi
+
+# write info and confirm
+echo "Build info:"
+echo "  version       : $version"
+echo "  type          : $type"
+echo "  output        : $pkgdir"
+echo "  local version : ${LOCAL_VERSION}"
+echo "  config        : $config"
+if [[ "$yes" == "" ]] ; then
+    echo -n "Confirm? [Y/n] "
+    read -n 1 c
+    if [[ "$c" != "y" || "$c" != "Y" ]] ; then
+        exit 1
     fi
 fi
 
@@ -137,25 +156,24 @@ if [[ "$nobuild" == 1 ]] ; then
     exit 0
 fi
 
+# Create directories
+mkdir -p "$pkgdir/boot" "$pkgdir/usr/src" "$modulesdir"
+
 # Building kernel
 if [[ "$ALLOWROOT" == "" ]] ; then
     e="unshare -rufipnm"
 fi
 yes "" | $e make all -j$(nproc)
 
-# Create directories
-mkdir -p "$pkgdir/boot" "$pkgdir/usr/src" "$modulesdir" || true
-
 # install bzImage
 install -Dm644 "$(make -s image_name)" "$pkgdir/boot/vmlinuz-${VERSION}"
+install -Dt "$builddir" -m644 Makefile Module.symvers System.map vmlinux || true
 
 # install modules
 make INSTALL_MOD_PATH="$pkgdir" INSTALL_MOD_STRIP=1 modules_install -j$(nproc)
 rm "$modulesdir"/{source,build} || true
 depmod --all --verbose --basedir="$pkgdir" "${VERSION}" || true
-
 # install build directories
-install -Dt "$builddir" -m644 Makefile Module.symvers System.map vmlinux || true
 install .config "$pkgdir/boot/config-${VERSION}"
 install -Dt "$builddir/kernel" -m644 kernel/Makefile
 install -Dt "$builddir/arch/$arch" -m644 arch/$arch/Makefile
