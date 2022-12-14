@@ -164,6 +164,8 @@ if [[ "${no_build}" == "" ]] ; then
 
 	# set local version
 	sed -i "s/^CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION=${LOCAL_VERSION}/g" "$builddir"/.config
+	# remove zstd stuff from config
+	sed -i "s/.*ZSTD.*//g" "$builddir"/.config
 fi
 
 # go kernel build path
