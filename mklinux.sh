@@ -124,17 +124,17 @@ fi
 if [[ $type == libre ]] ; then
     wget -c http://linux-libre.fsfla.org/pub/linux-libre/releases/${version}-gnu/linux-libre-${version}-gnu.tar.xz
     [[ -d "$builddir" ]] || tar -xf linux-libre-${version}-gnu.tar.xz
-    mv linux-${version} $builddir
+    [[ "linux-${version}" !=  "$builddir" ]] || mv linux-${version} $builddir
 elif [[ $type == linux ]] ; then
     wget -c https://cdn.kernel.org/pub/linux/kernel/v${version::1}.x/linux-${version}.tar.xz
     # extrack if directory not exists
     [[ -d "$builddir" ]] || tar -xf linux-${version}.tar.xz
-    mv linux-${version} $builddir
+    [[ "linux-${version}" !=  "$builddir" ]] || mv linux-${version} $builddir
 elif [[ $type == xanmod ]] ; then    
     wget -c https://github.com/xanmod/linux/archive/${version}-xanmod1.tar.gz
     if [[ -d "$builddir" ]] ; then
         tar -xf ${version}-xanmod1.tar.gz
-        mv linux-${version}-xanmod1 "$builddir"
+        [[ "linux-${version}-xanmod1" !=  "$builddir" ]] || mv linux-${version}-xanmod1 "$builddir"
     fi
 elif [[ $type == local ]] ; then
     if [[ ! -d "$builddir" ]] ; then
