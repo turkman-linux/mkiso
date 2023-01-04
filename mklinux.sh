@@ -18,6 +18,7 @@ write_help(){
      echo " -f --install-headers : install header files"
      echo " -q --install-modules : install module files"
      echo " -x --install-vmlinuz : install vmlinuz file"
+     echo " -g --self-install    : install mklinux on system"
 }
 
 # Initial stages
@@ -28,11 +29,6 @@ for cmd in bc wget gcc cpio tar unshare ; do
         exit 1
     fi
 done
-if [[ $UID -eq 0 && "$ALLOWROOT" == "" ]] ; then
-    echo "Root build in not allowed!"
-    echo "If you want to build with root use \"ALLOWROOT=1 mklinux ...\""
-    exit 1
-fi
 # Default variables
 config=./config
 type=libre
@@ -89,9 +85,18 @@ for arg in $@ ; do
     elif [[ "$arg" == "--help" || "$arg" == "-h" ]] ; then
         write_help
         exit 0
+    elif [[ "$arg" == "--self-install" || "$arg" == "-g" ]] ; then
+        mkdir -p "$pkgdir"/usr/bin/
+        exec install "$0" "$pkgdir"/usr/bin/mklinux
     fi
 done
 
+
+if [[ $UID -eq 0 && "$ALLOWROOT" == "" ]] ; then
+    echo "Root build in not allowed!"
+    echo "If you want to build with root use \"ALLOWROOT=1 mklinux ...\""
+    exit 1
+fi
 
 if [[ "$version" == "" && type != "local" ]] ; then
     version=$(wget -O - https://kernel.org/ 2>/dev/null | grep "downloadarrow_small.png" | sed "s/.*href=\"//g;s/\".*//g;s/.*linux-//g;s/\.tar.*//g")
@@ -205,18 +210,17 @@ if [[ "${no_build}" == "" ]] ; then
 	yes "" | $e make all -j$(nproc)
 fi
 
-if [[ "${install_header}" == "1" || "${install_modules}" == "1" || "${install_vmlinuz}" == "1" ]] ; then
-	# Create directories
-	mkdir -p "$pkgdir/boot" "$pkgdir/usr/src" "$modulesdir"
-fi
 if [[ "${install_vmlinuz}" == "1" ]] ; then
 	# install bzImage
+	mkdir -p "$pkgdir/boot"
 	install -Dm644 "$(make -s image_name)" "$pkgdir/boot/vmlinuz-${VERSION}"
 	install -Dt "$builddir" -m644 Makefile Module.symvers System.map vmlinux || true
 fi
 
 if [[ "${install_modules}" == "1" ]] ; then
 	# install modules
+	mkdir -p "$modulesdir"
+	mkdir -p "$pkgdir/usr/src"
 	make INSTALL_MOD_PATH="$pkgdir" INSTALL_MOD_STRIP=1 modules_install -j$(nproc)
 	rm "$modulesdir"/{source,build} || true
 	depmod --all --verbose --basedir="$pkgdir" "${VERSION}" || true
@@ -233,23 +237,24 @@ fi
 if [[ "${install_header}" == "1" ]] ; then
 	# install libc headers
 	make headers_install INSTALL_HDR_PATH="$pkgdir/usr"
-
-	# install headers
-	cp -t "$builddir" -a include
-	cp -t "$builddir/arch/$arch" -a arch/$arch/include
-	install -Dt "$builddir/arch/$arch/kernel" -m644 arch/$arch/kernel/asm-offsets.s
-	install -Dt "$builddir/drivers/md" -m644 drivers/md/*.h
-	install -Dt "$builddir/net/mac80211" -m644 net/mac80211/*.h
-	install -Dt "$builddir/drivers/media/i2c" -m644 drivers/media/i2c/msp3400-driver.h
-	install -Dt "$builddir/drivers/media/usb/dvb-usb" -m644 drivers/media/usb/dvb-usb/*.h
-	install -Dt "$builddir/drivers/media/dvb-frontends" -m644 drivers/media/dvb-frontends/*.h
-	install -Dt "$builddir/drivers/media/tuners" -m644 drivers/media/tuners/*.h
-	# https://bugs.archlinux.org/task/71392
-	install -Dt "$builddir/drivers/iio/common/hid-sensors" -m644 drivers/iio/common/hid-sensors/*.h
-	find . -name 'Kconfig*' -exec install -Dm644 {} "$builddir/{}" \;
+        if [[ "${install_modules}" == "1" ]] ; then
+		# install headers
+		cp -t "$builddir" -a include
+		cp -t "$builddir/arch/$arch" -a arch/$arch/include
+		install -Dt "$builddir/arch/$arch/kernel" -m644 arch/$arch/kernel/asm-offsets.s
+		install -Dt "$builddir/drivers/md" -m644 drivers/md/*.h
+		install -Dt "$builddir/net/mac80211" -m644 net/mac80211/*.h
+		install -Dt "$builddir/drivers/media/i2c" -m644 drivers/media/i2c/msp3400-driver.h
+		install -Dt "$builddir/drivers/media/usb/dvb-usb" -m644 drivers/media/usb/dvb-usb/*.h
+		install -Dt "$builddir/drivers/media/dvb-frontends" -m644 drivers/media/dvb-frontends/*.h
+		install -Dt "$builddir/drivers/media/tuners" -m644 drivers/media/tuners/*.h
+		# https://bugs.archlinux.org/task/71392
+		install -Dt "$builddir/drivers/iio/common/hid-sensors" -m644 drivers/iio/common/hid-sensors/*.h
+		find . -name 'Kconfig*' -exec install -Dm644 {} "$builddir/{}" \;
+	fi
 fi
 
-if [[ "${install_header}" == "1" || "${install_modules}" == "1" || "${install_vmlinuz}" == "1" ]] ; then
+if [[ "${install_modules}" == "1" || "${install_vmlinuz}" == "1" ]] ; then
 	# clearing
 	find -L "$builddir" -type l -printf 'Removing %P\n' -delete
 	find "$builddir" -type f -name '*.o' -printf 'Removing %P\n' -delete
