@@ -10,6 +10,7 @@ write_help(){
      echo " -t                   : type (linux / libre / xanmod / local)"
      echo " -l                   : local version"
      echo " -o                   : output directory"
+     echo " -w                   : work directory"
      echo " -s                   : UTS sysname"
      echo " -h --help            : help message"
      echo " -y --yes             : disable questions"
@@ -36,7 +37,9 @@ LOCAL_VERSION=""
 nobuild=0
 pkgdir=""
 sysname="Linux"
+workdir="/tmp/mklinux/"
 builddir=""
+curdir="$PWD"
 # Install variables
 install_header=""
 
@@ -60,6 +63,9 @@ while getopts -- ':c:v:t:o:s:b:' OPTION; do
      ;;
    s)
      sysname="${OPTARG[@]}"
+     ;;
+   w)
+     workdir=$(realpath "${OPTARG[@]}")
      ;;
    b)
      builddir="${OPTARG[@]}"
@@ -125,20 +131,23 @@ if [[ "$yes" == "" ]] ; then
     fi
 fi
 
+mkdir -p "$workdir"
+cd "$workdir"
+
 #fetch kernel
 if [[ $type == libre ]] ; then
-    wget -c http://linux-libre.fsfla.org/pub/linux-libre/releases/${version}-gnu/linux-libre-${version}-gnu.tar.xz
+    [[ -f linux-libre-${version}-gnu.tar.xz ]] || wget -c http://linux-libre.fsfla.org/pub/linux-libre/releases/${version}-gnu/linux-libre-${version}-gnu.tar.xz
     [[ -d "$builddir" ]] || tar -xf linux-libre-${version}-gnu.tar.xz
     [[ "linux-${version}" ==  "$builddir" ]] || mv linux-${version} $builddir
 elif [[ $type == linux ]] ; then
-    wget -c https://cdn.kernel.org/pub/linux/kernel/v${version::1}.x/linux-${version}.tar.xz
+    [[ -f linux-${version}.tar.xz ]] || wget -c https://cdn.kernel.org/pub/linux/kernel/v${version::1}.x/linux-${version}.tar.xz
     # extrack if directory not exists
     [[ -d "$builddir" ]] || tar -xf linux-${version}.tar.xz
     [[ "linux-${version}" ==  "$builddir" ]] || mv linux-${version} $builddir
 elif [[ $type == xanmod ]] ; then    
-    wget -c https://github.com/xanmod/linux/archive/${version}-xanmod1.tar.gz
+    [[ -f ${version}-xanmod1.tar.gz ]] || wget -c https://github.com/xanmod/linux/archive/${version}-xanmod1.tar.gz
     if [[ -d "$builddir" ]] ; then
-        tar -xf ${version}-xanmod1.tar.gz
+        [[ -d "$builddir" ]] || tar -xf ${version}-xanmod1.tar.gz
         [[ "linux-${version}-xanmod1" ==  "$builddir" ]] || mv linux-${version}-xanmod1 "$builddir"
     fi
 elif [[ $type == local ]] ; then
@@ -188,7 +197,7 @@ export LANG=C
 export LC_ALL=C
 VERSION="$(make -s kernelversion)"
 if [[ "$pkgdir" == "" ]] ; then
-    pkgdir=../build-$type/${VERSION}
+    pkgdir="$curdir"../build-$type/${VERSION}
 fi
 modulesdir=${pkgdir}/lib/modules/${VERSION}
 builddir="${pkgdir}/lib/modules/${VERSION}/build"
