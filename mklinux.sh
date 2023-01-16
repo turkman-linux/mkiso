@@ -180,6 +180,8 @@ if [[ "${no_build}" == "" ]] ; then
 	sed -i "s/^CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION=${LOCAL_VERSION}/g" "$builddir"/.config
 	# remove zstd stuff from config
 	sed -i "s/.*ZSTD.*//g" "$builddir"/.config
+    # remove default hostname
+    sed -i "s/^CONFIG_DEFAULT_HOSTNAME=.*//g" "$builddir"/.config
 fi
 
 # go kernel build path
