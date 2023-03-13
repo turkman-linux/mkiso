@@ -221,6 +221,22 @@ if [[ "${no_build}" == "" ]] ; then
 	yes "" | $e make all -j$(nproc)
 fi
 
+local file
+while read -rd '' file; do
+    case "$(file -Sib "$file")" in
+        application/x-sharedlib\;*)      # Libraries (.so)
+            strip "$file" ;;
+        application/x-executable\;*)     # Binaries
+            strip "$file" ;;
+        application/x-pie-executable\;*) # Relocatable binaries
+            strip "$file" ;;
+    esac
+done < <(find "$builddir" -type f -perm -u+x ! -name vmlinux -print0)
+
+echo "Stripping vmlinux..."
+strip "$builddir/vmlinux"
+
+
 if [[ "${install_vmlinuz}" == "1" ]] ; then
 	# install bzImage
 	mkdir -p "$pkgdir/boot"
