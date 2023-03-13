@@ -271,7 +271,6 @@ if [[ "${install_modules}" == "1" || "${install_vmlinuz}" == "1" ]] ; then
 	find "$builddir" -type f -name '*.o' -printf 'Removing %P\n' -delete
 fi
 
-local file
 while read -rd '' file; do
     case "$(file -Sib "$file")" in
         application/x-sharedlib\;*)      # Libraries (.so)
