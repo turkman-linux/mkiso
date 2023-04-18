@@ -1,6 +1,6 @@
 #!/bin/bash
 # Kernel builder
-# Uses sulix config
+# Uses archlinux config
 #
 #
 write_help(){
@@ -286,6 +286,8 @@ while read -rd '' file; do
     esac
 done < <(find "$builddir" -type f -perm -u+x ! -name vmlinux -print0)
 
-echo "Stripping vmlinux..."
-strip "$builddir/vmlinux"
+if [[ -f "$builddir/vmlinux" ]] ; then
+    echo "Stripping vmlinux..."
+    strip "$builddir/vmlinux"
+fi
 
