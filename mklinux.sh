@@ -39,7 +39,7 @@ pkgdir=""
 sysname="Linux"
 workdir="/tmp/mklinux/"
 builddir=""
-curdir="$PWD"
+curdir="$PWD/"
 # Install variables
 install_header=""
 
