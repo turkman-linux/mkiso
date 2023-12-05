@@ -194,7 +194,7 @@ if [[ "${no_build}" == "" ]] ; then
     ./scripts/config --disable CONFIG_HIBERNATION_SNAPSHOT_DEV
     ./scripts/config --disable CONFIG_HIBERNATE_CALLBACKS
     # disable signinig
-    ./scripts/config --disable CONFIG_MODULE_SIG
+    ./scripts/config --disable CONFIG_MODULE_SIG_ALL
     # enable some stuff
     ./scripts/config --enable CONFIG_EMBEDDED
     ./scripts/config --enable CONFIG_LOGO
