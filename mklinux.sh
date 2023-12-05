@@ -187,7 +187,7 @@ if [[ "${no_build}" == "" ]] ; then
 	# remove zstd stuff from config
 	./scripts/config --disable CONFIG_KERNEL_ZSTD
     # remove default hostname
-    sed -i "/^CONFIG_DEFAULT_HOSTNAME=.*/CONFIG_LOCALVERSION=\"localhost\"/g" .config
+    sed -i "s/^CONFIG_DEFAULT_HOSTNAME=.*/CONFIG_DEFAULT_HOSTNAME=\"localhost\"/g" .config
 
     # disable hibernate
     ./scripts/config --disable CONFIG_HIBERNATION
