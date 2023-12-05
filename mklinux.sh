@@ -186,6 +186,12 @@ if [[ "${no_build}" == "" ]] ; then
 	sed -i "s/^CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION=\"${LOCAL_VERSION}\"/g" .config
 	# remove zstd stuff from config
 	./scripts/config --disable CONFIG_KERNEL_ZSTD
+	./scripts/config --disable CONFIG_MODULE_COMPRESS_ZSTD
+
+	# enable gzip and uncompress modules
+	./scripts/config --enable CONFIG_KERNEL_GZIP
+	./scripts/config --enable CONFIG_MODULE_DECOMPRESS
+
     # remove default hostname
     sed -i "s/^CONFIG_DEFAULT_HOSTNAME=.*/CONFIG_DEFAULT_HOSTNAME=\"localhost\"/g" .config
 
