@@ -144,7 +144,7 @@ elif [[ $type == linux ]] ; then
     # extrack if directory not exists
     [[ -d "$builddir" ]] || tar -xf linux-${version}.tar.xz
     [[ "linux-${version}" ==  "$builddir" ]] || mv linux-${version} $builddir
-elif [[ $type == xanmod ]] ; then    
+elif [[ $type == xanmod ]] ; then
     [[ -f ${version}-xanmod1.tar.gz ]] || wget -c https://github.com/xanmod/linux/archive/${version}-xanmod1.tar.gz
     if [[ -d "$builddir" ]] ; then
         [[ -d "$builddir" ]] || tar -xf ${version}-xanmod1.tar.gz
@@ -183,11 +183,11 @@ if [[ "${no_build}" == "" ]] ; then
 	cd "$builddir"
 
 	# set local version
-	sed -i "s/^CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION=${LOCAL_VERSION}/g" .config
+	sed -i "s/^CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION=\"${LOCAL_VERSION}\"/g" .config
 	# remove zstd stuff from config
 	./scripts/config --disable CONFIG_KERNEL_ZSTD
     # remove default hostname
-    sed -i "/^CONFIG_DEFAULT_HOSTNAME=.*/d" .config
+    # sed -i "/^CONFIG_DEFAULT_HOSTNAME=.*/d" .config
 
     # disable hibernate
     ./scripts/config --disable CONFIG_HIBERNATION
@@ -195,8 +195,6 @@ if [[ "${no_build}" == "" ]] ; then
     ./scripts/config --disable CONFIG_HIBERNATE_CALLBACKS
     # disable signinig
     ./scripts/config --disable CONFIG_MODULE_SIG
-    ./scripts/config --disable SYSTEM_TRUSTED_KEYS
-    ./scripts/config --disable SYSTEM_REVOCATION_KEYS
     # enable some stuff
     ./scripts/config --enable CONFIG_EMBEDDED
     ./scripts/config --enable CONFIG_LOGO
@@ -204,7 +202,10 @@ if [[ "${no_build}" == "" ]] ; then
     ./scripts/config --enable CONFIG_LOGO_LINUX_VGA16
     ./scripts/config --enable CONFIG_LOGO_LINUX_CLUT224
 
-    yes "" | make -C "$builddir" config
+    # remove autoconfig
+    > include/config/auto.conf
+
+#    yes "" | make -C "$builddir" config
 fi
 
 # go kernel build path
