@@ -112,7 +112,7 @@ if [[ "$version" == "" && type != "local" ]] ; then
 fi
 
 if [[ "$builddir" == "" ]] ; then
-    builddir=$(realpath $workdir/build-${version})
+    builddir=linux-${version}
 fi
 
 # write info and confirm
@@ -160,6 +160,8 @@ else
     exit 1
 fi
 
+builddir=$(realpath $builddir)
+
 if [[ "${no_build}" == "" ]] ; then
 	if [[ "$sysname" != "Linux" ]] ; then
 		sed -i "s/#define UTS_SYSNAME .*/#define UTS_SYSNAME \"$sysname\"/g" linux-${version}//include/linux/uts.h
@@ -176,14 +178,16 @@ if [[ "${no_build}" == "" ]] ; then
 		exit 1
 	fi
 
+    yes "" | make -C "$builddir" config
+
 	cd "$builddir"
 
 	# set local version
-	sed -i "s/^CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION=${LOCAL_VERSION}/g" "$builddir"/.config
+	sed -i "s/^CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION=${LOCAL_VERSION}/g" .config
 	# remove zstd stuff from config
 	./scripts/config --disable CONFIG_KERNEL_ZSTD
     # remove default hostname
-    sed -i "/^CONFIG_DEFAULT_HOSTNAME=.*/d" "$builddir"/.config
+    sed -i "/^CONFIG_DEFAULT_HOSTNAME=.*/d" .config
 
     # disable hibernate
     ./scripts/config --disable CONFIG_HIBERNATION
@@ -199,6 +203,8 @@ if [[ "${no_build}" == "" ]] ; then
     ./scripts/config --enable CONFIG_LOGO_LINUX_MONO
     ./scripts/config --enable CONFIG_LOGO_LINUX_VGA16
     ./scripts/config --enable CONFIG_LOGO_LINUX_CLUT224
+
+    yes "" | make -C "$builddir" config
 fi
 
 # go kernel build path
@@ -235,7 +241,7 @@ if [[ "${no_build}" == "" ]] ; then
 	if [[ "$ALLOWROOT" == "" ]] ; then
 		e="unshare -rufipnm"
 	fi
-	yes "" | $e make all -j$(nproc)
+	$e make all -j$(nproc)
 fi
 
 if [[ "${install_vmlinuz}" == "1" ]] ; then
