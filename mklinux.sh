@@ -68,7 +68,7 @@ while getopts -- ':c:v:t:o:s:b:' OPTION; do
      workdir=$(realpath "${OPTARG[@]}")
      ;;
    b)
-     builddir="${OPTARG[@]}"
+     builddir=$(realpath "${OPTARG[@]}")
      ;;
     esac
 done
@@ -112,7 +112,7 @@ if [[ "$version" == "" && type != "local" ]] ; then
 fi
 
 if [[ "$builddir" == "" ]] ; then
-    builddir=linux-${version}
+    builddir=$(realpath linux-${version})
 fi
 
 # write info and confirm
@@ -176,21 +176,30 @@ if [[ "${no_build}" == "" ]] ; then
 		exit 1
 	fi
 
+
 	# set local version
 	sed -i "s/^CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION=${LOCAL_VERSION}/g" "$builddir"/.config
 	# remove zstd stuff from config
-	sed -i "s/.*ZSTD.*//g" "$builddir"/.config
+	./scripts/config --disable CONFIG_KERNEL_ZSTD
     # remove default hostname
-    sed -i "s/^CONFIG_DEFAULT_HOSTNAME=.*//g" "$builddir"/.config
-    # disable hibernate
-    sed -i "s/CONFIG_HIBERNATION=.*/# CONFIG_HIBERNATION is not set/g" "$builddir"/.config
-    sed -i "s/CONFIG_HIBERNATION_SNAPSHOT_DEV=.*/# CONFIG_HIBERNATION_SNAPSHOT_DEV is not set/g" "$builddir"/.config
-    sed -i "s/CONFIG_HIBERNATE_CALLBACKS=.*/# CONFIG_HIBERNATE_CALLBACKS is not set/g" "$builddir"/.config
-    # disable signinig
-    sed -i "s/CONFIG_MODULE_SIG=.*/# CONFIG_MODULE_SIG is not set/g" "$builddir"/.config
-    sed -i "s/CONFIG_MODULE_SIG_ALL=.*/# CONFIG_MODULE_SIG_ALL is not set/g" "$builddir"/.config
-    sed -i "s/CONFIG_MODULE_SIG_KEY=.*/CONFIG_MODULE_SIG_KEY=\"\"/g" "$builddir"/.config
+    sed -i "/^CONFIG_DEFAULT_HOSTNAME=.*/d" "$builddir"/.config
 
+	cd "$builddir"
+
+    # disable hibernate
+    ./scripts/config --disable CONFIG_HIBERNATION
+    ./scripts/config --disable CONFIG_HIBERNATION_SNAPSHOT_DEV
+    ./scripts/config --disable CONFIG_HIBERNATE_CALLBACKS
+    # disable signinig
+    ./scripts/config --disable CONFIG_MODULE_SIG
+    ./scripts/config --disable SYSTEM_TRUSTED_KEYS
+    ./scripts/config --disable SYSTEM_REVOCATION_KEYS
+    # enable some stuff
+    ./scripts/config --enable CONFIG_EMBEDDED
+    ./scripts/config --enable CONFIG_LOGO
+    ./scripts/config --enable CONFIG_LOGO_LINUX_MONO
+    ./scripts/config --enable CONFIG_LOGO_LINUX_VGA16
+    ./scripts/config --enable CONFIG_LOGO_LINUX_CLUT224
 fi
 
 # go kernel build path
