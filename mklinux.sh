@@ -186,6 +186,11 @@ if [[ "${no_build}" == "" ]] ; then
     sed -i "s/CONFIG_HIBERNATION=.*/# CONFIG_HIBERNATION is not set/g" "$builddir"/.config
     sed -i "s/CONFIG_HIBERNATION_SNAPSHOT_DEV=.*/# CONFIG_HIBERNATION_SNAPSHOT_DEV is not set/g" "$builddir"/.config
     sed -i "s/CONFIG_HIBERNATE_CALLBACKS=.*/# CONFIG_HIBERNATE_CALLBACKS is not set/g" "$builddir"/.config
+    # disable signinig
+    sed -i "s/CONFIG_MODULE_SIG=.*/# CONFIG_MODULE_SIG is not set/g" "$builddir"/.config
+    sed -i "s/CONFIG_MODULE_SIG_ALL=.*/# CONFIG_MODULE_SIG_ALL is not set/g" "$builddir"/.config
+    sed -i "s/CONFIG_MODULE_SIG_KEY=.*/CONFIG_MODULE_SIG_KEY=\"\"/g" "$builddir"/.config
+
 fi
 
 # go kernel build path
