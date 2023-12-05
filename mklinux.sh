@@ -176,6 +176,7 @@ if [[ "${no_build}" == "" ]] ; then
 		exit 1
 	fi
 
+	cd "$builddir"
 
 	# set local version
 	sed -i "s/^CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION=${LOCAL_VERSION}/g" "$builddir"/.config
@@ -183,8 +184,6 @@ if [[ "${no_build}" == "" ]] ; then
 	./scripts/config --disable CONFIG_KERNEL_ZSTD
     # remove default hostname
     sed -i "/^CONFIG_DEFAULT_HOSTNAME=.*/d" "$builddir"/.config
-
-	cd "$builddir"
 
     # disable hibernate
     ./scripts/config --disable CONFIG_HIBERNATION
