@@ -112,7 +112,7 @@ if [[ "$version" == "" && type != "local" ]] ; then
 fi
 
 if [[ "$builddir" == "" ]] ; then
-    builddir=$(realpath linux-${version})
+    builddir=$(realpath $workdir/build-${version})
 fi
 
 # write info and confirm
