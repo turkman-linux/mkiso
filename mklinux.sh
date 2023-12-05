@@ -208,6 +208,22 @@ if [[ "${no_build}" == "" ]] ; then
     ./scripts/config --enable CONFIG_LOGO_LINUX_VGA16
     ./scripts/config --enable CONFIG_LOGO_LINUX_CLUT224
 
+    # embed all filesystem modules
+    grep "^CONFIG_[A-Z]*_FS=m" .config  | cut -f1 -d"=" | while read cfg ; do
+        ./scripts/config --enable $cfg
+    done
+
+    # disable selinux
+    grep "^CONFIG_SECURITY_SELINUX_*" .config  | cut -f1 -d"=" | while read cfg ; do
+        ./scripts/config --disable $cfg
+    done
+
+    # disable zstd
+    grep "^CONFIG_.*ZSTD.*" .config  | cut -f1 -d"=" | while read cfg ; do
+        ./scripts/config --disable $cfg
+    done
+
+
     yes "" | make -C "$builddir" config
 fi
 
