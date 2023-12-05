@@ -187,7 +187,7 @@ if [[ "${no_build}" == "" ]] ; then
 	# remove zstd stuff from config
 	./scripts/config --disable CONFIG_KERNEL_ZSTD
     # remove default hostname
-    # sed -i "/^CONFIG_DEFAULT_HOSTNAME=.*/d" .config
+    sed -i "/^CONFIG_DEFAULT_HOSTNAME=.*/CONFIG_LOCALVERSION=\"localhost\"/g" .config
 
     # disable hibernate
     ./scripts/config --disable CONFIG_HIBERNATION
@@ -202,10 +202,7 @@ if [[ "${no_build}" == "" ]] ; then
     ./scripts/config --enable CONFIG_LOGO_LINUX_VGA16
     ./scripts/config --enable CONFIG_LOGO_LINUX_CLUT224
 
-    # remove autoconfig
-    > include/config/auto.conf
-
-#    yes "" | make -C "$builddir" config
+    yes "" | make -C "$builddir" config
 fi
 
 # go kernel build path
