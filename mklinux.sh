@@ -314,16 +314,19 @@ if [[ "${install_modules}" == "1" || "${install_vmlinuz}" == "1" ]] ; then
 	find "$builddir" -type f -name '*.o' -printf 'Removing %P\n' -delete
 fi
 
-while read -rd '' file; do
-    case "$(file -Sib "$file")" in
-        application/x-sharedlib\;*)      # Libraries (.so)
-            strip "$file" ;;
-        application/x-executable\;*)     # Binaries
-            strip "$file" ;;
-        application/x-pie-executable\;*) # Relocatable binaries
-            strip "$file" ;;
-    esac
-done < <(find "$builddir" -type f -perm -u+x ! -name vmlinux -print0)
+if [[ -d "$builddir" ]] ; then
+    while read -rd '' file; do
+        case "$(file -Sib "$file")" in
+            application/x-sharedlib\;*)      # Libraries (.so)
+                strip "$file" ;;
+            application/x-executable\;*)     # Binaries
+                strip "$file" ;;
+            application/x-pie-executable\;*) # Relocatable binaries
+                strip "$file" ;;
+        esac
+    done < <(find "$builddir" -type f -perm -u+x ! -name vmlinux -print0)
+
+fi
 
 if [[ -f "$builddir/vmlinux" ]] ; then
     echo "Stripping vmlinux..."
