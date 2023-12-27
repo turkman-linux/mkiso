@@ -268,7 +268,6 @@ if [[ "${install_vmlinuz}" == "1" ]] ; then
 	# install bzImage
 	mkdir -p "$pkgdir/boot"
 	install -Dm644 "$(make -s image_name)" "$pkgdir/boot/vmlinuz-${VERSION}"
-	install -Dt "$builddir" -m644 Makefile Module.symvers System.map vmlinux || true
 fi
 
 if [[ "${install_modules}" == "1" ]] ; then
@@ -286,6 +285,7 @@ if [[ "${install_modules}" == "1" ]] ; then
 	install -Dt "$builddir/tools/objtool" tools/objtool/objtool
 	mkdir -p "$builddir"/{fs/xfs,mm}
 	ln -s "../../lib/modules/${VERSION}/build" "$pkgdir/usr/src/linux-headers-${VERSION}"
+	install -Dt "$builddir" -m644 Makefile Module.symvers System.map vmlinux
 fi
 
 if [[ "${install_header}" == "1" ]] ; then
