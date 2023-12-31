@@ -36,6 +36,8 @@ src_uri="https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware
 tarball=https://git.kernel.org/$(wget -O - ${src_uri} 2>/dev/null | sed "s/.tar.gz'.*/.tar.gz/g;s/.*'//g" | grep "^/pub" | sort -V | tail -n 1)
 version=$(echo $tarball | sed "s/.*-//g;s/\..*//g")
 
+
+
 if [[ "$PRINT" != "" ]] ; then
     echo $version
     exit 0
@@ -47,6 +49,11 @@ elif [[ "$INSTALL" != "" ]] ; then
         fi
     fi
     mkdir -p /tmp/mkfw/
+
+    # dummy rdfind command if does not exists
+    ln -s /bin/true /tmp/mkfw/rdfind
+    export PATH="$PATH":/tmp/mkfw/
+
     if [[ ! -f /tmp/mkfw/$version.tar.gz ]] ; then
         wget $tarball -O /tmp/mkfw/$version.tar.gz
     fi
