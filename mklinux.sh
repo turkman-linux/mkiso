@@ -290,23 +290,29 @@ fi
 
 if [[ "${install_header}" == "1" ]] ; then
 	# install libc headers
+	mkdir -p "$pkgdir/usr/include/linux"
+    cp -v -t "$pkgdir/usr/include/" -a include/linux/
+    cp -v -t "$pkgdir/usr/" -a tools/include
 	make headers_install INSTALL_HDR_PATH="$pkgdir/usr"
-        if [[ "${install_modules}" == "1" ]] ; then
-		# install headers
-		cp -t "$builddir" -a include
-		cp -t "$builddir/arch/$arch" -a arch/$arch/include
-		install -Dt "$builddir/arch/$arch/kernel" -m644 arch/$arch/kernel/asm-offsets.s
-		install -Dt "$builddir/drivers/md" -m644 drivers/md/*.h
-		install -Dt "$builddir/net/mac80211" -m644 net/mac80211/*.h
-		install -Dt "$builddir/drivers/media/i2c" -m644 drivers/media/i2c/msp3400-driver.h
-		install -Dt "$builddir/drivers/media/usb/dvb-usb" -m644 drivers/media/usb/dvb-usb/*.h
-		install -Dt "$builddir/drivers/media/dvb-frontends" -m644 drivers/media/dvb-frontends/*.h
-		install -Dt "$builddir/drivers/media/tuners" -m644 drivers/media/tuners/*.h
-		# https://bugs.archlinux.org/task/71392
-		install -Dt "$builddir/drivers/iio/common/hid-sensors" -m644 drivers/iio/common/hid-sensors/*.h
-		find . -name 'Kconfig*' -exec install -Dm644 {} "$builddir/{}" \;
-	fi
 fi
+
+if [[ "${install_modules}" == "1" ]] ; then
+    # install headers
+    mkdir -p "$builddir" "$builddir/arch/$arch"
+    cp -v -t "$builddir" -a include
+    cp -v -t "$builddir/arch/$arch" -a arch/$arch/include
+    install -Dt "$builddir/arch/$arch/kernel" -m644 arch/$arch/kernel/asm-offsets.*
+    install -Dt "$builddir/drivers/md" -m644 drivers/md/*.h
+    install -Dt "$builddir/net/mac80211" -m644 net/mac80211/*.h
+    install -Dt "$builddir/drivers/media/i2c" -m644 drivers/media/i2c/msp3400-driver.h
+    install -Dt "$builddir/drivers/media/usb/dvb-usb" -m644 drivers/media/usb/dvb-usb/*.h
+    install -Dt "$builddir/drivers/media/dvb-frontends" -m644 drivers/media/dvb-frontends/*.h
+    install -Dt "$builddir/drivers/media/tuners" -m644 drivers/media/tuners/*.h
+    # https://bugs.archlinux.org/task/71392
+    install -Dt "$builddir/drivers/iio/common/hid-sensors" -m644 drivers/iio/common/hid-sensors/*.h
+    find . -name 'Kconfig*' -exec install -Dm644 {} "$builddir/{}" \;
+fi
+
 
 if [[ "${install_modules}" == "1" || "${install_vmlinuz}" == "1" ]] ; then
 	# clearing
