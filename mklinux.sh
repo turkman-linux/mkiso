@@ -209,7 +209,7 @@ if [[ "${no_build}" == "" ]] ; then
     ./scripts/config --enable CONFIG_LOGO_LINUX_CLUT224
 
     # embed all filesystem modules
-    grep "^CONFIG_[A-Z]*_FS=m" .config  | cut -f1 -d"=" | while read cfg ; do
+    grep "^CONFIG_[A-Z0-9]*_FS=m" .config  | cut -f1 -d"=" | while read cfg ; do
         ./scripts/config --enable $cfg
     done
 
