@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 while getopts -- ':d:' OPTION; do
   case "$OPTION" in
      d)
@@ -33,9 +34,9 @@ for arg in $@ ; do
 done
 
 src_uri="https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git/refs/"
-tarball=https://git.kernel.org/$(wget -O - ${src_uri} 2>/dev/null | sed "s/.tar.gz'.*/.tar.gz/g;s/.*'//g" | grep "^/pub" | sort -V | tail -n 1)
+tarball=https://git.kernel.org/$(wget -O - ${src_uri} 2>/dev/null \
+    | sed "s/.tar.gz'.*/.tar.gz/g;s/.*'//g" | grep "^/pub" | sort -V | tail -n 1)
 version=$(echo $tarball | sed "s/.*-//g;s/\..*//g")
-
 
 
 if [[ "$PRINT" != "" ]] ; then
@@ -50,16 +51,17 @@ elif [[ "$INSTALL" != "" ]] ; then
     fi
     mkdir -p /tmp/mkfw/
 
-    # dummy rdfind command if does not exists
-    ln -s /bin/true /tmp/mkfw/rdfind
-    export PATH="$PATH":/tmp/mkfw/
-
     if [[ ! -f /tmp/mkfw/$version.tar.gz ]] ; then
         wget $tarball -O /tmp/mkfw/$version.tar.gz
     fi
     cd /tmp/mkfw/
     tar -xf $version.tar.gz
-    make install -C linux-firmware-$version
+    cd linux-firmware-$version
+    sh -ex ./copy_firmware.sh "$DESTDIR/lib/firmware.mkfw" --ignore-duplicates
+    if [[ -d "$DESTDIR/lib/firmware" ]] ; then
+        rm -rf "$DESTDIR/lib/firmware"
+    fi
+    mv "$DESTDIR/lib/firmware.mkfw" "$DESTDIR/lib/firmware"
     echo "$version" > "$DESTDIR/lib/firmware/.version"
 elif [[ "$REMOVE" != "" ]] ; then
     rm -rf "$DESTDIR"/lib/firmware
