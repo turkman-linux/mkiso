@@ -49,19 +49,20 @@ elif [[ "$INSTALL" != "" ]] ; then
             exit 0
         fi
     fi
-    mkdir -p /tmp/mkfw/
+    mkdir -p /var/lib/mkfw/
 
-    if [[ ! -f /tmp/mkfw/$version.tar.gz ]] ; then
-        wget $tarball -O /tmp/mkfw/$version.tar.gz
+    if [[ ! -f /var/lib/mkfw/$version.tar.gz ]] ; then
+        wget $tarball -O /var/lib/mkfw/$version.tar.gz
     fi
-    cd /tmp/mkfw/
+    cd /var/lib/mkfw
     tar -xf $version.tar.gz
     cd linux-firmware-$version
-    sh -ex ./copy_firmware.sh "$DESTDIR/lib/firmware.mkfw" --ignore-duplicates
+    sh -ex ./copy-firmware.sh "$DESTDIR/lib/firmware.mkfw" --ignore-duplicates
     if [[ -d "$DESTDIR/lib/firmware" ]] ; then
         rm -rf "$DESTDIR/lib/firmware"
     fi
     mv "$DESTDIR/lib/firmware.mkfw" "$DESTDIR/lib/firmware"
+    rm -rf /var/lib/mkfw
     echo "$version" > "$DESTDIR/lib/firmware/.version"
 elif [[ "$REMOVE" != "" ]] ; then
     rm -rf "$DESTDIR"/lib/firmware
