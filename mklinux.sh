@@ -180,17 +180,28 @@ if [[ "${no_build}" == "" ]] ; then
 
     yes "" | make -C "$builddir" config
 
-	cd "$builddir"
+	  cd "$builddir"
 
-	# set local version
-	sed -i "s/^CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION=\"${LOCAL_VERSION}\"/g" .config
-	# remove zstd stuff from config
-	./scripts/config --disable CONFIG_KERNEL_ZSTD
-	./scripts/config --disable CONFIG_MODULE_COMPRESS_ZSTD
+    # embed all filesystem modules
+    grep "^CONFIG_[A-Z0-9]*_FS=m" .config  | cut -f1 -d"=" | while read cfg ; do
+        ./scripts/config --enable $cfg
+    done
+    # uncompress modules
+    grep "^CONFIG_KERNEL_[A-Z]*" .config  | cut -f1 -d"=" | while read cfg ; do
+        ./scripts/config --disable $cfg
+    done
 
-	# enable gzip and uncompress modules
-	./scripts/config --enable CONFIG_KERNEL_GZIP
-	./scripts/config --enable CONFIG_MODULE_DECOMPRESS
+    # uncompress modules
+    grep "^CONFIG_MODULE_COMPRESS_[A-Z]*" .config  | cut -f1 -d"=" | while read cfg ; do
+        ./scripts/config --disable $cfg
+    done
+	  ./scripts/config --disable CONFIG_MODULE_COMPRESS
+
+	  # set local version
+	  sed -i "s/^CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION=\"${LOCAL_VERSION}\"/g" .config
+
+	  # enable gzip and uncompress modules
+	  ./scripts/config --enable CONFIG_MODULE_DECOMPRESS
 
     # remove default hostname
     sed -i "s/^CONFIG_DEFAULT_HOSTNAME=.*/CONFIG_DEFAULT_HOSTNAME=\"localhost\"/g" .config
